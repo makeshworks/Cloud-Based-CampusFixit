@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CampusFixit — Cloud-Based Campus Complaint Management System">
+  <title>CampusFixit — Campus Complaint Management</title>
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+  <!-- ── NAVBAR ──────────────────────────────────────────── -->
+  <nav class="navbar">
+    <a href="index.html" class="navbar-brand">
+      <div class="brand-icon">🏫</div>
+      CampusFixit
+    </a>
+    <div class="navbar-nav">
+      <a href="login.html" id="nav-login-btn" class="btn btn-primary btn-sm">Login →</a>
+    </div>
+  </nav>
+
+  <!-- ── HERO ─────────────────────────────────────────────── -->
+  <main class="hero" style="padding-top: calc(var(--navbar-height) + 2rem);">
+
+    <div class="hero-badge">🎓 Built for Campus Communities</div>
+
+    <h1 class="hero-title">
+      Report Campus Issues.<br>
+      <span>Get Them Fixed Fast.</span>
+    </h1>
+
+    <p class="hero-subtitle">
+      A simple, transparent system to submit, track, and resolve maintenance
+      complaints across your campus — from broken fans to Wi-Fi outages.
+    </p>
+
+    <div class="hero-actions">
+      <a href="login.html" class="btn btn-gradient btn-lg" id="get-started-btn">🚀 Get Started</a>
+      <a href="#how-it-works" class="btn btn-secondary btn-lg" id="learn-more-btn">Learn How It Works</a>
+    </div>
+
+    <!-- Role cards -->
+    <div class="hero-cards">
+      <a href="login.html" class="hero-role-card" id="student-card">
+        <div class="role-icon">🎓</div>
+        <div class="role-name">Student</div>
+        <div class="role-desc">Submit & track complaints</div>
+      </a>
+      <a href="login.html" class="hero-role-card" id="admin-card">
+        <div class="role-icon">🛠️</div>
+        <div class="role-name">Admin</div>
+        <div class="role-desc">Review & assign issues</div>
+      </a>
+      <a href="login.html" class="hero-role-card" id="staff-card">
+        <div class="role-icon">👷</div>
+        <div class="role-name">Staff</div>
+        <div class="role-desc">Work on & resolve issues</div>
+      </a>
+    </div>
+  </main>
+
+  <!-- ── HOW IT WORKS ─────────────────────────────────────── -->
+  <section id="how-it-works" style="padding: var(--space-20) var(--space-8); background: var(--color-surface);">
+    <div style="max-width: 900px; margin: 0 auto; text-align: center;">
+      <h2 style="margin-bottom: var(--space-4);">How It Works</h2>
+      <p style="margin-bottom: var(--space-12);">A transparent, step-by-step process from submission to resolution.</p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-6); text-align: left;">
+        <div class="card card-glow" id="step-submit">
+          <div style="font-size:32px;margin-bottom:var(--space-3);">📝</div>
+          <div style="font-size:var(--font-size-xs);font-weight:700;color:var(--color-primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:var(--space-2);">Step 1</div>
+          <h5>Submit</h5>
+          <p style="font-size:var(--font-size-sm);">Student reports the issue with location and category.</p>
+        </div>
+        <div class="card card-glow" id="step-review">
+          <div style="font-size:32px;margin-bottom:var(--space-3);">🔍</div>
+          <div style="font-size:var(--font-size-xs);font-weight:700;color:var(--color-primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:var(--space-2);">Step 2</div>
+          <h5>Review</h5>
+          <p style="font-size:var(--font-size-sm);">Admin reviews and assigns to the right staff member.</p>
+        </div>
+        <div class="card card-glow" id="step-work">
+          <div style="font-size:32px;margin-bottom:var(--space-3);">👷</div>
+          <div style="font-size:var(--font-size-xs);font-weight:700;color:var(--color-primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:var(--space-2);">Step 3</div>
+          <h5>Work</h5>
+          <p style="font-size:var(--font-size-sm);">Staff works on it and updates status in real-time.</p>
+        </div>
+        <div class="card card-glow" id="step-resolve">
+          <div style="font-size:32px;margin-bottom:var(--space-3);">✅</div>
+          <div style="font-size:var(--font-size-xs);font-weight:700;color:var(--color-primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:var(--space-2);">Step 4</div>
+          <h5>Resolved</h5>
+          <p style="font-size:var(--font-size-sm);">Student tracks progress and gives feedback on resolution.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STATUS LEGEND ────────────────────────────────────── -->
+  <section style="padding: var(--space-16) var(--space-8);">
+    <div style="max-width:700px;margin:0 auto;text-align:center;">
+      <h2 style="margin-bottom:var(--space-4);">Complaint Status Flow</h2>
+      <p style="margin-bottom:var(--space-8);">Every complaint passes through clearly defined stages.</p>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:var(--space-3);">
+        <span class="badge badge-submitted">Submitted</span>
+        <span style="color:var(--text-tertiary);">→</span>
+        <span class="badge badge-review">Under Review</span>
+        <span style="color:var(--text-tertiary);">→</span>
+        <span class="badge badge-assigned">Assigned</span>
+        <span style="color:var(--text-tertiary);">→</span>
+        <span class="badge badge-inprogress">In Progress</span>
+        <span style="color:var(--text-tertiary);">→</span>
+        <span class="badge badge-resolved">Resolved</span>
+        <span style="color:var(--text-tertiary);">→</span>
+        <span class="badge badge-closed">Closed</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ───────────────────────────────────────────── -->
+  <footer style="padding:var(--space-8);border-top:1px solid var(--color-border);text-align:center;color:var(--text-tertiary);font-size:var(--font-size-sm);">
+    <p>CampusFixit — Cloud-Based Campus Complaint Management System</p>
+    <p style="margin-top:var(--space-2);">Flask · Python · SQLite · AWS EC2 · S3 · Docker · CI/CD</p>
+  </footer>
+
+  <script src="static/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = Session.getUser();
+      if (user) {
+        const routes = {
+          student:  'app/templates/student/dashboard.html',
+          admin:    'app/templates/admin/dashboard.html',
+          employee: 'app/templates/employee/dashboard.html',
+        };
+        window.location.href = routes[user.role] || 'login.html';
+      }
+    });
+  </script>
+</body>
+</html>

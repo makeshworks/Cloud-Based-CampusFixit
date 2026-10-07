@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Student Dashboard — CampusFixit">
+  <title>Student Dashboard — CampusFixit</title>
+  <link rel="stylesheet" href="../../static/css/style.css">
+</head>
+<body>
+
+  <!-- ── NAVBAR ──────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div style="display: flex; align-items: center; gap: var(--space-4);">
+      <!-- Hamburger menu for mobile -->
+      <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()" id="sidebar-toggle" title="Toggle sidebar">
+        ☰
+      </button>
+      <a href="../index.html" class="navbar-brand">
+        <div class="brand-icon">🏫</div>
+        CampusFixit
+      </a>
+    </div>
+    <div class="navbar-nav" style="align-items: center; gap: var(--space-3);">
+      <span class="badge badge-student">🎓 Student</span>
+      <button class="btn btn-secondary btn-sm" onclick="Session.logout()" id="logout-btn">Logout</button>
+    </div>
+  </nav>
+
+  <div class="app-layout">
+
+    <!-- ── SIDEBAR ───────────────────────────────────────── -->
+    <aside class="sidebar" id="main-sidebar">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Main</div>
+        <nav class="sidebar-nav">
+          <a href="dashboard.html" class="active" id="nav-dashboard">
+            <span class="nav-icon">📊</span> Dashboard
+          </a>
+          <a href="submit.html" id="nav-submit">
+            <span class="nav-icon">➕</span> New Complaint
+          </a>
+          <a href="history.html" id="nav-history">
+            <span class="nav-icon">📋</span> My Complaints
+          </a>
+        </nav>
+      </div>
+
+      <!-- User info at bottom -->
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Loading...</div>
+          <div class="user-role" id="sidebar-user-role">student</div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ── MAIN CONTENT ──────────────────────────────────── -->
+    <main class="main-content" id="main-content">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1 class="page-title">👋 Welcome back, <span id="welcome-name">Student</span>!</h1>
+        <p class="page-subtitle">Here's an overview of your complaints and their current status.</p>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-grid" id="student-stats">
+        <!-- Filled dynamically by JavaScript -->
+      </div>
+
+      <!-- Quick action -->
+      <div class="card" style="margin-bottom: var(--space-6); background: linear-gradient(135deg, rgba(47,129,247,0.08), rgba(188,140,255,0.08)); border-color: rgba(47,129,247,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-4);">
+          <div>
+            <h4 style="margin-bottom: var(--space-2);">🔧 Have a campus issue?</h4>
+            <p style="margin: 0; font-size: var(--font-size-sm);">Submit a complaint and track it in real-time.</p>
+          </div>
+          <a href="submit.html" class="btn btn-gradient" id="quick-submit-btn">
+            ➕ Submit New Complaint
+          </a>
+        </div>
+      </div>
+
+      <!-- Recent Complaints Table -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Recent Complaints</h3>
+            <p class="card-subtitle">Your last 5 submitted complaints</p>
+          </div>
+          <a href="history.html" class="btn btn-secondary btn-sm" id="view-all-btn">View All →</a>
+        </div>
+
+        <div id="recent-complaints-container">
+          <!-- Filled by JavaScript -->
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../../static/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Guard: only students can access this page
+      const user = Session.getUser();
+      if (!user || user.role !== 'student') {
+        window.location.href = '../../login.html';
+        return;
+      }
+
+      // Set up page with user info
+      initPage('student');
+      document.getElementById('welcome-name').textContent = user.name.split(' ')[0];
+
+      // Load and display student's complaints
+      const myComplaints = Complaints.getByStudent(user.id);
+
+      // ── Render stats ─────────────────────────────────────
+      const stats = [
+        {
+          icon: '📋', label: 'Total Complaints',
+          value: myComplaints.length, colorClass: 'blue'
+        },
+        {
+          icon: '⏳', label: 'Pending',
+          value: myComplaints.filter(c => ['Submitted','Under Review','Assigned'].includes(c.status)).length,
+          colorClass: 'yellow'
+        },
+        {
+          icon: '🔨', label: 'In Progress',
+          value: myComplaints.filter(c => c.status === 'In Progress').length,
+          colorClass: 'orange'
+        },
+        {
+          icon: '✅', label: 'Resolved',
+          value: myComplaints.filter(c => ['Resolved','Closed'].includes(c.status)).length,
+          colorClass: 'green'
+        },
+      ];
+
+      document.getElementById('student-stats').innerHTML = stats.map(s => `
+        <div class="stat-card">
+          <div class="stat-icon ${s.colorClass}">${s.icon}</div>
+          <div class="stat-content">
+            <div class="stat-number">${s.value}</div>
+            <div class="stat-label">${s.label}</div>
+          </div>
+        </div>
+      `).join('');
+
+      // ── Render recent complaints ──────────────────────────
+      const container = document.getElementById('recent-complaints-container');
+
+      if (myComplaints.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <div class="empty-state-title">No complaints yet</div>
+            <div class="empty-state-text">You haven't submitted any complaints yet.</div>
+            <a href="submit.html" class="btn btn-primary">Submit Your First Complaint</a>
+          </div>
+        `;
+        return;
+      }
+
+      // Show the 5 most recent complaints
+      const recent = [...myComplaints]
+        .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
+        .slice(0, 5);
+
+      container.innerHTML = `
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Complaint ID & Views</th>
+                <th>Category</th>
+                <th>Location</th>
+                <th>Assigned To</th>
+                <th>Priority</th>
+                <th>Work Progress</th>
+                <th>Submitted</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${recent.map(c => {
+                const isCompleted = c.status === 'Resolved' || c.status === 'Closed';
+                return `
+                  <tr class="${isCompleted ? 'card-completed' : ''}">
+                    <td>
+                      <div style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+                        <span class="complaint-id">${escapeHtml(c.id)}</span>
+                        ${Complaints.renderViewDot(c)}
+                      </div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 500;">${escapeHtml(c.category)}</div>
+                    </td>
+                    <td>${escapeHtml(truncate(c.location, 26))}</td>
+                    <td>
+                      ${c.assignedTo ? `
+                        <div style="font-size: var(--font-size-xs); font-weight: 500; color: var(--color-purple);">
+                          👷 ${escapeHtml(c.assignedTo)}
+                          ${c.assignedBy ? `<div style="font-size: 10px; color: var(--text-tertiary);">Assigned by ${escapeHtml(c.assignedBy)}</div>` : ''}
+                        </div>
+                      ` : `
+                        <span style="font-size: var(--font-size-xs); color: var(--text-tertiary);">Visible to all staff</span>
+                      `}
+                    </td>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                        ${renderBadge(c.priority, getPriorityBadgeClass(c.priority))}
+                        ${c.isTriggered ? '<span class="badge badge-triggered" style="font-size: 10px;">🚨 Triggered</span>' : ''}
+                      </div>
+                    </td>
+                    <td style="min-width: 140px;">
+                      <div style="margin-bottom: 4px;">
+                        ${renderBadge(c.status, getStatusBadgeClass(c.status))}
+                        ${renderProgressChip(c.progressPercent)}
+                      </div>
+                      ${renderProgressBar(c.progressPercent)}
+                    </td>
+                    <td style="font-size: var(--font-size-xs); color: var(--text-secondary);">${escapeHtml(c.submittedAt)}</td>
+                    <td>
+                      <a href="history.html?id=${encodeURIComponent(c.id)}"
+                         class="btn btn-secondary btn-sm">Track</a>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); flex-wrap: wrap; font-size: var(--font-size-xs); color: var(--text-tertiary);">
+          <span><strong>Tracking Dot Legend:</strong></span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-admin"></span> Admin Viewed</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-employee"></span> Staff Viewed</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-both pulse"></span> Both Viewed</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-none"></span> Not Viewed Yet</span>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

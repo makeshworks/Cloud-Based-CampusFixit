@@ -1,0 +1,17 @@
+# Private keys - NEVER commit these
+campusfixit-key.pem
+*.pem
+
+# Sensitive data
+summary.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+.idea/
+
+# Temp chrome profile for E2E demo
+tmp-chrome/

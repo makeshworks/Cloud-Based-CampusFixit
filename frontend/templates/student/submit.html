@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Submit a Complaint — CampusFixit">
+  <title>Submit Complaint — CampusFixit</title>
+  <link rel="stylesheet" href="../../static/css/style.css">
+</head>
+<body>
+
+  <!-- ── NAVBAR ──────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div style="display: flex; align-items: center; gap: var(--space-4);">
+      <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()" id="sidebar-toggle">☰</button>
+      <a href="../index.html" class="navbar-brand">
+        <div class="brand-icon">🏫</div>
+        CampusFixit
+      </a>
+    </div>
+    <div class="navbar-nav">
+      <span class="badge badge-student">🎓 Student</span>
+      <button class="btn btn-secondary btn-sm" onclick="Session.logout()" id="logout-btn">Logout</button>
+    </div>
+  </nav>
+
+  <div class="app-layout">
+
+    <!-- ── SIDEBAR ───────────────────────────────────────── -->
+    <aside class="sidebar" id="main-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Main</div>
+        <nav class="sidebar-nav">
+          <a href="dashboard.html" id="nav-dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+          <a href="submit.html" class="active" id="nav-submit"><span class="nav-icon">➕</span> New Complaint</a>
+          <a href="history.html" id="nav-history"><span class="nav-icon">📋</span> My Complaints</a>
+        </nav>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Loading...</div>
+          <div class="user-role" id="sidebar-user-role">student</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── MAIN CONTENT ──────────────────────────────────── -->
+    <main class="main-content" id="main-content">
+
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a href="dashboard.html">Dashboard</a>
+        <span class="sep">›</span>
+        <span class="current">Submit Complaint</span>
+      </nav>
+
+      <div class="page-header">
+        <h1 class="page-title">📝 Submit a Complaint</h1>
+        <p class="page-subtitle">Fill out the form below. Be as specific as possible so the issue can be resolved quickly.</p>
+      </div>
+
+      <!-- Success screen (hidden initially, shown after submission) -->
+      <div id="success-screen" class="hidden">
+
+        <!-- Caution / Applied Green Banner -->
+        <div class="alert-applied-green">
+          <div class="icon-box">✅</div>
+          <div>
+            <h3 style="color: #10b981; margin-bottom: var(--space-1); font-size: var(--font-size-lg);">
+              Complaint Registered &amp; Instantly Routed
+            </h3>
+            <p style="margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.6;">
+              Your complaint is now active and visible to <strong style="color: #e6edf3;">Admin and Campus Maintenance Staff</strong>.
+              The system has <strong style="color: #34d399;">🤖 auto-classified</strong> and routed it to the responsible team — no manual admin action needed.
+            </p>
+          </div>
+        </div>
+
+        <!-- Auto-Assigned Staff Info Box (filled by JS) -->
+        <div id="auto-route-info"></div>
+
+        <div class="card" style="text-align: center; padding: var(--space-10);">
+          <div style="font-size: 52px; margin-bottom: var(--space-3);">📋</div>
+          <h2 style="margin-bottom: var(--space-2);">Complaint ID Generated</h2>
+          <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+            Keep this tracking ID. You can monitor who views your complaint (Admin, Staff, or Both) and watch live work progress.
+          </p>
+          <div style="
+            display: inline-block;
+            background: var(--color-surface-2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5) var(--space-10);
+            margin-bottom: var(--space-8);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.15);
+          ">
+            <div style="font-size: var(--font-size-xs); color: #10b981; margin-bottom: var(--space-2); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Official Tracking ID</div>
+            <div class="complaint-id" id="success-complaint-id" style="font-size: var(--font-size-2xl); color: #fff;">—</div>
+          </div>
+          <div style="display: flex; gap: var(--space-4); justify-content: center; flex-wrap: wrap;">
+            <a href="history.html" class="btn btn-primary" id="track-complaint-btn">📋 Track This Complaint Live</a>
+            <a href="dashboard.html" class="btn btn-secondary" id="go-dashboard-btn">📊 Back to Normal Dashboard</a>
+            <button class="btn btn-ghost" onclick="showForm()" id="submit-another-btn">➕ Submit Another</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Complaint form -->
+      <div id="complaint-form-wrapper">
+        <div style="display: grid; grid-template-columns: 1fr 300px; gap: var(--space-6); align-items: start;">
+
+          <!-- Left: Main form -->
+          <div class="card card-lg">
+            <form id="complaint-form" onsubmit="handleSubmitComplaint(event)" novalidate>
+
+              <!-- Category -->
+              <div class="form-group">
+                <label class="form-label" for="complaint-category">
+                  Category <span class="required">*</span>
+                </label>
+                <select id="complaint-category" class="form-control" required>
+                  <option value="">— Select issue type —</option>
+                </select>
+                <span class="form-error" id="category-error">Please select a category.</span>
+              </div>
+
+              <!-- Location -->
+              <div class="form-group">
+                <label class="form-label" for="complaint-location">
+                  Location <span class="required">*</span>
+                </label>
+                <select id="complaint-location" class="form-control" required>
+                  <option value="">— Select location —</option>
+                </select>
+                <span class="form-error" id="location-error">Please select a location.</span>
+              </div>
+
+              <!-- Description -->
+              <div class="form-group">
+                <label class="form-label" for="complaint-description">
+                  Description <span class="required">*</span>
+                </label>
+                <textarea
+                  id="complaint-description"
+                  class="form-control"
+                  rows="5"
+                  placeholder="Describe the problem clearly. For example: 'The ceiling fan in Room 201 is making loud noise and wobbling badly. It's been happening since Monday.'"
+                  required
+                  maxlength="1000"
+                ></textarea>
+                <div class="form-hint">
+                  <span id="char-count">0</span>/1000 characters.
+                  Be specific — mention exact room numbers, how long the problem has been there, etc.
+                </div>
+                <span class="form-error" id="description-error">Please describe the issue (min 20 characters).</span>
+              </div>
+
+              <!-- File upload (Phase 1: UI only — actual upload added in Phase 5) -->
+              <div class="form-group">
+                <label class="form-label">
+                  Upload Image <span style="color: var(--text-tertiary); font-weight: 400;">(optional)</span>
+                </label>
+                <div class="file-upload" id="file-upload-zone" onclick="document.getElementById('complaint-image').click()">
+                  <div class="file-upload-icon">📷</div>
+                  <p style="margin: 0; font-size: var(--font-size-sm); color: var(--text-secondary);">
+                    Click to upload or drag & drop
+                  </p>
+                  <p style="margin: var(--space-1) 0 0; font-size: var(--font-size-xs); color: var(--text-tertiary);">
+                    JPG, PNG or WEBP. Max 5MB. (S3 upload added in Phase 5)
+                  </p>
+                  <input type="file" id="complaint-image" accept="image/*" onchange="handleFileSelect(this)">
+                </div>
+                <div id="file-preview" class="hidden" style="margin-top: var(--space-3); display: flex; align-items: center; gap: var(--space-3);">
+                  <img id="file-preview-img" src="" alt="Preview" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+                  <div>
+                    <div id="file-name" style="font-size: var(--font-size-sm); font-weight: 500;"></div>
+                    <button type="button" onclick="clearFile()" class="btn btn-ghost btn-sm" style="color: var(--color-danger);" id="remove-file-btn">Remove</button>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-gradient btn-full btn-lg" id="submit-complaint-btn">
+                🚀 Submit Complaint
+              </button>
+
+            </form>
+          </div>
+
+          <!-- Right: Tips + Routing Map sidebar -->
+          <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+
+            <!-- Live route preview: changes as user picks category -->
+            <div class="card card-sm" id="route-preview-card" style="border-color: rgba(16,185,129,0.25); display:none;">
+              <h5 style="margin-bottom: var(--space-2); color: #34d399;">🤖 Will Be Auto-Routed To</h5>
+              <div id="route-preview-content"></div>
+            </div>
+
+            <div class="card card-sm">
+              <h5 style="margin-bottom: var(--space-3);">✍️ Tips for a Good Complaint</h5>
+              <ul style="display: flex; flex-direction: column; gap: var(--space-2);">
+                <li style="font-size: var(--font-size-sm); color: var(--text-secondary); display: flex; gap: var(--space-2);">
+                  <span>✅</span> Mention the exact room or area
+                </li>
+                <li style="font-size: var(--font-size-sm); color: var(--text-secondary); display: flex; gap: var(--space-2);">
+                  <span>✅</span> Say how long the issue has existed
+                </li>
+                <li style="font-size: var(--font-size-sm); color: var(--text-secondary); display: flex; gap: var(--space-2);">
+                  <span>✅</span> Add a photo if possible
+                </li>
+                <li style="font-size: var(--font-size-sm); color: var(--text-secondary); display: flex; gap: var(--space-2);">
+                  <span>❌</span> Don't submit duplicate complaints
+                </li>
+                <li style="font-size: var(--font-size-sm); color: var(--text-secondary); display: flex; gap: var(--space-2);">
+                  <span>❌</span> Don't use abusive language
+                </li>
+              </ul>
+            </div>
+
+            <div class="card card-sm">
+              <h5 style="margin-bottom: var(--space-3);">📌 What Happens Next?</h5>
+              <div class="timeline">
+                <div class="timeline-item completed">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-title">You submit</div>
+                  <div class="timeline-meta">You get a unique Complaint ID</div>
+                </div>
+                <div class="timeline-item completed">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-title">🤖 Auto-classified &amp; routed</div>
+                  <div class="timeline-meta">Instantly assigned to the right staff</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-title">Staff gets alerted</div>
+                  <div class="timeline-meta">Direct popup notification to staff</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-title">Issue resolved</div>
+                  <div class="timeline-meta">You get a success notification</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Category Routing Map Info -->
+            <div class="card card-sm">
+              <h5 style="margin-bottom: var(--space-3);">🗂️ Category Routing Map</h5>
+              <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); margin-bottom: var(--space-3);">
+                Each category is instantly routed to the right maintenance team:
+              </p>
+              <div id="routing-map-display"></div>
+            </div>
+
+          </div>
+        </div>
+      </div><!-- end #complaint-form-wrapper -->
+
+    </main>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../../static/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Guard: only students
+      const user = Session.getUser();
+      if (!user || user.role !== 'student') {
+        window.location.href = '../../login.html';
+        return;
+      }
+
+      initPage('student');
+
+      // ── Populate category dropdown ────────────────────────
+      const catSelect = document.getElementById('complaint-category');
+      MOCK_DATA.categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.value;  // use value (e.g. 'electrical') for routing
+        opt.textContent = cat.label;
+        catSelect.appendChild(opt);
+      });
+
+      // ── Populate location dropdown ─────────────────────────
+      const locSelect = document.getElementById('complaint-location');
+      MOCK_DATA.locations.forEach(loc => {
+        const opt = document.createElement('option');
+        opt.value = loc;
+        opt.textContent = loc;
+        locSelect.appendChild(opt);
+      });
+
+      // ── Character counter for description ─────────────────
+      const desc = document.getElementById('complaint-description');
+      const counter = document.getElementById('char-count');
+      desc.addEventListener('input', () => {
+        counter.textContent = desc.value.length;
+      });
+
+      // ── Route preview: update sidebar when category changes ─
+      catSelect.addEventListener('change', () => {
+        const val = catSelect.value;
+        const card = document.getElementById('route-preview-card');
+        const content = document.getElementById('route-preview-content');
+        if (!val) { card.style.display = 'none'; return; }
+        const route = getRouteForCategory(val);
+        if (route) {
+          card.style.display = 'block';
+          content.innerHTML = `
+            <div class="routing-info-card" style="margin-top:0;">
+              <div class="route-icon">${route.icon}</div>
+              <div class="route-detail">
+                <div class="route-staff">${escapeHtml(route.staff)}</div>
+                <div class="route-dept">${escapeHtml(route.department)}</div>
+              </div>
+              <span class="badge-auto-assigned">🤖 Auto-Routed</span>
+            </div>
+          `;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // ── Render routing map in sidebar ─────────────────────
+      const mapEl = document.getElementById('routing-map-display');
+      if (mapEl) {
+        mapEl.innerHTML = `<div class="category-map-grid">` +
+          CATEGORY_ROUTING.map(r => `
+            <div class="category-map-card">
+              <div class="map-header">
+                <span class="map-icon">${r.icon}</span>
+                <div>
+                  <div class="map-staff">${escapeHtml(r.staff)}</div>
+                </div>
+              </div>
+              <div class="map-dept">${escapeHtml(r.department)}</div>
+              <div class="map-tags">
+                ${r.categories.map(c => `<span class="category-map-tag">${c}</span>`).join('')}
+              </div>
+            </div>
+          `).join('') +
+        `</div>`;
+      }
+
+      // ── Drag and drop for file upload ─────────────────────
+      const dropZone = document.getElementById('file-upload-zone');
+      dropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+      });
+      dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files[0]) previewFile(files[0]);
+      });
+    });
+
+    /** Show image preview after file selection */
+    function handleFileSelect(input) {
+      if (input.files && input.files[0]) {
+        previewFile(input.files[0]);
+      }
+    }
+
+    function previewFile(file) {
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select an image file.', 'error');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Image must be smaller than 5MB.', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('file-preview-img').src = e.target.result;
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-preview').classList.remove('hidden');
+        document.getElementById('file-preview').style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearFile() {
+      document.getElementById('complaint-image').value = '';
+      document.getElementById('file-preview').classList.add('hidden');
+    }
+
+    /** Handle complaint form submission */
+    function handleSubmitComplaint(event) {
+      event.preventDefault();
+
+      const user = Session.getUser();
+      const category    = document.getElementById('complaint-category').value;
+      const location    = document.getElementById('complaint-location').value;
+      const description = document.getElementById('complaint-description').value.trim();
+
+      // Validate
+      let valid = true;
+
+      if (!category) {
+        document.getElementById('complaint-category').classList.add('is-invalid');
+        document.getElementById('category-error').style.display = 'block';
+        valid = false;
+      }
+
+      if (!location) {
+        document.getElementById('complaint-location').classList.add('is-invalid');
+        document.getElementById('location-error').style.display = 'block';
+        valid = false;
+      }
+
+      if (description.length < 20) {
+        document.getElementById('complaint-description').classList.add('is-invalid');
+        document.getElementById('description-error').style.display = 'block';
+        valid = false;
+      }
+
+      if (!valid) {
+        showToast('Please fill all required fields.', 'error');
+        return;
+      }
+
+      // Simulate a small "loading" delay (in Phase 2, replaced by real API call)
+      const btn = document.getElementById('submit-complaint-btn');
+      btn.textContent = '⏳ Routing & Submitting...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        // Add to storage — auto-routing happens inside Complaints.add()
+        const newComplaint = Complaints.add({
+          studentId:   user.id,
+          studentName: user.name,
+          category,    // e.g. 'electrical', 'plumbing' — used for routing
+          location,
+          description,
+          image: null
+        });
+
+        // Show auto-route info on success screen
+        const routeInfoEl = document.getElementById('auto-route-info');
+        const route = getRouteForCategory(category);
+        if (route && routeInfoEl) {
+          routeInfoEl.innerHTML = `
+            <div class="routing-info-card">
+              <div class="route-icon">${route.icon}</div>
+              <div class="route-detail">
+                <div style="font-size: var(--font-size-xs); color: var(--text-tertiary); margin-bottom: 2px;">🤖 Auto-classified &amp; instantly assigned to:</div>
+                <div class="route-staff">👷 ${escapeHtml(route.staff)}</div>
+                <div class="route-dept">${escapeHtml(route.department)} • Staff has been alerted immediately</div>
+              </div>
+              <span class="badge-auto-assigned">🤖 Auto-Routed</span>
+            </div>
+          `;
+        }
+
+        // Show success screen
+        document.getElementById('success-complaint-id').textContent = newComplaint.id;
+        document.getElementById('complaint-form-wrapper').classList.add('hidden');
+        document.getElementById('success-screen').classList.remove('hidden');
+
+        showToast(`Complaint auto-routed to ${route ? route.staff : 'Maintenance Team'} 🤖✅`, 'success');
+      }, 800);
+    }
+
+    function showForm() {
+      document.getElementById('success-screen').classList.add('hidden');
+      document.getElementById('complaint-form-wrapper').classList.remove('hidden');
+      // Reset form
+      document.getElementById('complaint-form').reset();
+      document.getElementById('char-count').textContent = '0';
+      document.getElementById('route-preview-card').style.display = 'none';
+      clearFile();
+      const btn = document.getElementById('submit-complaint-btn');
+      btn.textContent = '🚀 Submit Complaint';
+      btn.disabled = false;
+    }
+  </script>
+</body>
+</html>

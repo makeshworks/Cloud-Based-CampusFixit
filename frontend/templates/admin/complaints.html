@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Manage Complaints — Admin — CampusFixit">
+  <title>All Complaints — Admin — CampusFixit</title>
+  <link rel="stylesheet" href="../../static/css/style.css">
+</head>
+<body>
+
+  <!-- ── NAVBAR ──────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div style="display: flex; align-items: center; gap: var(--space-4);">
+      <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()" id="sidebar-toggle">☰</button>
+      <a href="../index.html" class="navbar-brand">
+        <div class="brand-icon">🏫</div>
+        CampusFixit
+      </a>
+    </div>
+    <div class="navbar-nav">
+      <span class="badge badge-admin">🛠️ Admin</span>
+      <button class="btn btn-secondary btn-sm" onclick="Session.logout()" id="logout-btn">Logout</button>
+    </div>
+  </nav>
+
+  <div class="app-layout">
+    <aside class="sidebar" id="main-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Management</div>
+        <nav class="sidebar-nav">
+          <a href="dashboard.html" id="nav-dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+          <a href="complaints.html" class="active" id="nav-complaints"><span class="nav-icon">📋</span> All Complaints</a>
+        </nav>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Loading...</div>
+          <div class="user-role" id="sidebar-user-role">admin</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content" id="main-content">
+
+      <!-- Complaints list view -->
+      <div id="list-view">
+        <div class="page-header">
+          <h1 class="page-title">📋 All Complaints</h1>
+          <p class="page-subtitle">Review, filter, and manage all campus complaints.</p>
+        </div>
+
+        <!-- Nav Tabs for Admin -->
+        <div class="nav-tabs-pills" id="admin-tabs">
+          <button class="nav-tab-pill active" onclick="switchTab('all')" id="tab-all">
+            📋 All Complaints <span class="pill-badge" id="badge-all">0</span>
+          </button>
+          <button class="nav-tab-pill" onclick="switchTab('active')" id="tab-active">
+            ⚡ Active Work <span class="pill-badge" id="badge-active">0</span>
+          </button>
+          <button class="nav-tab-pill" onclick="switchTab('triggered')" id="tab-triggered">
+            🚨 Triggered Problems <span class="pill-badge" id="badge-triggered">0</span>
+          </button>
+          <button class="nav-tab-pill" onclick="switchTab('resolved')" id="tab-resolved">
+            ✅ Resolved History <span class="pill-badge" id="badge-resolved">0</span>
+          </button>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filters-bar">
+          <div class="search-input">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="Search by ID, student, or description..." oninput="filterComplaints()">
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Status:</span>
+            <select id="filter-status" class="form-control" style="width: auto;" onchange="filterComplaints()">
+              <option value="">All</option>
+              <option value="Submitted">Submitted</option>
+              <option value="Under Review">Under Review</option>
+              <option value="Assigned">Assigned</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Closed">Closed</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Priority:</span>
+            <select id="filter-priority" class="form-control" style="width: auto;" onchange="filterComplaints()">
+              <option value="">All</option>
+              <option value="Urgent">Urgent</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Sort:</span>
+            <select id="sort-by" class="form-control" style="width: auto;" onchange="filterComplaints()">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="priority">Priority (High → Low)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dot status legend -->
+        <div style="display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; font-size: var(--font-size-xs); color: var(--text-tertiary);">
+          <span><strong>Tracking Dot Status:</strong></span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-admin"></span> Admin Viewed</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-employee"></span> Staff Viewed</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-both pulse"></span> Both Viewed</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-none"></span> Unread</span>
+        </div>
+
+        <div id="complaints-table-container">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <!-- Detail view (shown when a complaint is selected) -->
+      <div id="detail-view" class="hidden">
+        <!-- Filled by JS -->
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Assign Modal -->
+  <div class="modal-overlay" id="assign-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h4 class="modal-title">👷 Assign Complaint</h4>
+        <button class="btn btn-ghost btn-icon" onclick="closeModal('assign-modal')" id="close-assign-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">
+          Assign complaint <strong id="assign-complaint-id"></strong> to a maintenance employee.
+        </p>
+        <div class="form-group">
+          <label class="form-label" for="assign-employee">Select Employee <span class="required">*</span></label>
+          <select id="assign-employee" class="form-control">
+            <option value="">— Select employee —</option>
+            <option value="Ramesh Patel">Ramesh Patel (Electrical)</option>
+            <option value="Suresh Kumar">Suresh Kumar (Plumbing)</option>
+            <option value="Vikram Rao">Vikram Rao (Wi-Fi & IT Support)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="assign-priority">Set Priority <span class="required">*</span></label>
+          <select id="assign-priority" class="form-control">
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">🚨 Urgent (Most Triggered)</option>
+          </select>
+        </div>
+
+        <!-- Triggered Problem Checkbox -->
+        <div class="form-group" style="background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); padding: var(--space-3); border-radius: var(--radius-md);">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-size: var(--font-size-sm); color: #f85149; font-weight: 600;">
+            <input type="checkbox" id="assign-triggered" onchange="handleTriggeredToggle(this)">
+            <span>🚨 Mark as Most Triggered Problem</span>
+          </label>
+          <p style="margin: 4px 0 0 22px; font-size: 11px; color: var(--text-tertiary);">
+            Elevates priority to Urgent and sends an immediate high-priority alert popup to the employee!
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="assign-note">Note to Employee (optional)</label>
+          <textarea id="assign-note" class="form-control" rows="2" placeholder="e.g. 'High priority student area, please resolve immediately'"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('assign-modal')" id="cancel-assign-btn">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmAssign()" id="confirm-assign-btn">✅ Assign & Alert Staff</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../../static/js/main.js"></script>
+  <script>
+    let currentUser = null;
+    let allComplaints = [];
+    let currentTab = 'all';
+    let selectedComplaintId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      currentUser = Session.getUser();
+      if (!currentUser || currentUser.role !== 'admin') {
+        window.location.href = '../../login.html';
+        return;
+      }
+      initPage('admin');
+
+      loadAdminComplaints();
+
+      // Auto-open a complaint if ?id= is in the URL
+      const params = new URLSearchParams(window.location.search);
+      const targetId = params.get('id');
+      if (targetId) {
+        const c = Complaints.getById(targetId);
+        if (c) showDetail(c);
+      }
+    });
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.nav-tab-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `tab-${tab}`);
+      });
+      filterComplaints();
+    }
+
+    function loadAdminComplaints() {
+      allComplaints = Complaints.getAll()
+        .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+
+      updateAdminBadges();
+      filterComplaints();
+    }
+
+    function updateAdminBadges() {
+      const activeCount = allComplaints.filter(c => !['Resolved', 'Closed'].includes(c.status)).length;
+      const triggeredCount = allComplaints.filter(c => c.isTriggered || c.priority === 'Urgent').length;
+      const resolvedCount = allComplaints.filter(c => ['Resolved', 'Closed'].includes(c.status)).length;
+
+      document.getElementById('badge-all').textContent = allComplaints.length;
+      document.getElementById('badge-active').textContent = activeCount;
+      document.getElementById('badge-triggered').textContent = triggeredCount;
+      document.getElementById('badge-resolved').textContent = resolvedCount;
+    }
+
+    function handleTriggeredToggle(checkbox) {
+      if (checkbox.checked) {
+        document.getElementById('assign-priority').value = 'Urgent';
+      }
+    }
+
+    /** Render complaints in a table */
+    function renderTable(complaints) {
+      const container = document.getElementById('complaints-table-container');
+
+      if (complaints.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <div class="empty-state-title">No complaints found</div>
+            <div class="empty-state-text">Try adjusting the tab or filter options.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Complaint ID & Views</th>
+                <th>Category</th>
+                <th>Student</th>
+                <th>Location</th>
+                <th>Priority</th>
+                <th>Work Progress</th>
+                <th>Assigned To</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${complaints.map(c => {
+                const isCompleted = ['Resolved', 'Closed'].includes(c.status);
+                const percent = c.progressPercent || 0;
+
+                return `
+                  <tr class="${isCompleted ? 'card-completed' : ''}">
+                    <td>
+                      <div style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+                        <span class="complaint-id">${escapeHtml(c.id)}</span>
+                        ${Complaints.renderViewDot(c)}
+                      </div>
+                    </td>
+                    <td><div style="font-weight: 500;">${escapeHtml(c.category)}</div></td>
+                    <td style="font-size: var(--font-size-xs);">${escapeHtml(c.studentName)}</td>
+                    <td style="font-size: var(--font-size-xs);">${escapeHtml(truncate(c.location, 24))}</td>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                        ${renderBadge(c.priority, getPriorityBadgeClass(c.priority))}
+                        ${c.isTriggered ? '<span class="badge badge-triggered" style="font-size:10px;">🚨 Triggered</span>' : ''}
+                      </div>
+                    </td>
+                    <td style="min-width: 130px;">
+                      <div style="margin-bottom: 4px;">
+                        ${renderBadge(c.status, getStatusBadgeClass(c.status))}
+                        ${renderProgressChip(percent)}
+                      </div>
+                      ${renderProgressBar(percent)}
+                    </td>
+                    <td style="font-size: var(--font-size-xs);">
+                      ${c.assignedTo ? `
+                        <span style="color: var(--color-purple); font-weight: 500;">👷 ${escapeHtml(c.assignedTo)}</span>
+                        ${c.assignedBy ? `<div style="font-size: 10px; color: var(--text-tertiary);">Assigned by ${escapeHtml(c.assignedBy)}</div>` : ''}
+                      ` : '<span style="color: var(--text-tertiary);">— Unassigned</span>'}
+                    </td>
+                    <td style="font-size: var(--font-size-xs); color: var(--text-secondary);">${escapeHtml(c.submittedAt)}</td>
+                    <td>
+                      <div style="display: flex; gap: var(--space-2);">
+                        <button class="btn btn-secondary btn-sm"
+                          onclick="showDetail(Complaints.getById('${c.id}'))"
+                          id="view-btn-${c.id.replace(/[^a-zA-Z0-9]/g, '-')}">View</button>
+                        ${!c.assignedTo ? `
+                          <button class="btn btn-primary btn-sm"
+                            onclick="openAssign('${c.id}')"
+                            id="assign-btn-${c.id.replace(/[^a-zA-Z0-9]/g, '-')}">Assign</button>
+                        ` : ''}
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); margin-top: var(--space-3);">
+          Showing ${complaints.length} complaint(s)
+        </p>
+      `;
+    }
+
+    /** Show detail view of a complaint and mark viewed by Admin */
+    function showDetail(complaint) {
+      if (!complaint) return;
+
+      // Mark viewed by Admin!
+      Complaints.markViewed(complaint.id, 'admin', currentUser.name);
+
+      document.getElementById('list-view').classList.add('hidden');
+      const dv = document.getElementById('detail-view');
+      dv.classList.remove('hidden');
+
+      const isCompleted = ['Resolved', 'Closed'].includes(complaint.status);
+      const percent = complaint.progressPercent || 0;
+
+      dv.innerHTML = `
+        <nav class="breadcrumb">
+          <a href="#" onclick="showList(); return false;">All Complaints</a>
+          <span class="sep">›</span>
+          <span class="current">${escapeHtml(complaint.id)}</span>
+        </nav>
+
+        <div class="page-header">
+          <div style="display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap;">
+            <h1 class="page-title" style="margin: 0;">Complaint Details</h1>
+            ${Complaints.renderViewDot(complaint)}
+            ${renderBadge(complaint.status, getStatusBadgeClass(complaint.status))}
+            ${renderBadge(complaint.priority, getPriorityBadgeClass(complaint.priority))}
+            ${complaint.isTriggered ? '<span class="badge badge-triggered">🚨 Triggered Problem</span>' : ''}
+          </div>
+        </div>
+
+        <div class="detail-grid">
+          <div>
+            <div class="card card-lg ${isCompleted ? 'card-completed' : ''}" style="margin-bottom: var(--space-6);">
+              <div class="card-header">
+                <span class="complaint-id" style="font-size: var(--font-size-base);">${escapeHtml(complaint.id)}</span>
+                <div style="display: flex; gap: var(--space-2);">
+                  ${!complaint.assignedTo ? `
+                    <button class="btn btn-primary btn-sm" onclick="openAssign('${complaint.id}')" id="detail-assign-btn">👷 Assign to Employee</button>
+                  ` : `
+                    <button class="btn btn-secondary btn-sm" onclick="openAssign('${complaint.id}')">🔄 Reassign Staff</button>
+                  `}
+                  ${complaint.status === 'Assigned' ? `
+                    <button class="btn btn-warning btn-sm" onclick="markInProgress('${complaint.id}')" id="mark-inprogress-btn"
+                      style="background: var(--color-warning); color: #000; border: none;">🔨 Start Work</button>
+                  ` : ''}
+                </div>
+              </div>
+
+              <!-- Work Progress Section -->
+              <div style="background: var(--color-surface-2); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-5); border: 1px solid var(--color-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+                  <div class="meta-label" style="margin: 0;">Live Work Progress</div>
+                  <div style="font-weight: 700; color: #10b981;">${percent}% Completed</div>
+                </div>
+                ${renderProgressBar(percent)}
+              </div>
+
+              <div class="detail-meta">
+                <div class="meta-item">
+                  <div class="meta-label">Student</div>
+                  <div class="meta-value">${escapeHtml(complaint.studentName)}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">Category</div>
+                  <div class="meta-value">${escapeHtml(complaint.category)}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">Location</div>
+                  <div class="meta-value">${escapeHtml(complaint.location)}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">Assigned Employee</div>
+                  <div class="meta-value">${escapeHtml(complaint.assignedTo || 'Not assigned')}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">Admin Assignment</div>
+                  <div class="meta-value">${escapeHtml(complaint.assignedBy ? `Assigned by ${complaint.assignedBy}` : 'None')}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">Who Viewed</div>
+                  <div class="meta-value">${Complaints.renderViewDot(complaint)}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">Submitted</div>
+                  <div class="meta-value">${escapeHtml(complaint.submittedAt)}</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">Last Updated</div>
+                  <div class="meta-value">${escapeHtml(complaint.updatedAt)}</div>
+                </div>
+              </div>
+
+              <div style="background: var(--color-surface-2); border-radius: var(--radius-md); padding: var(--space-4);">
+                <div class="meta-label" style="margin-bottom: var(--space-2);">Description</div>
+                <p style="margin: 0; font-size: var(--font-size-sm); line-height: 1.7;">
+                  ${escapeHtml(complaint.description)}
+                </p>
+              </div>
+
+              ${complaint.feedback ? `
+                <div class="alert alert-success" style="margin-top: var(--space-4);">
+                  <span class="alert-icon">⭐</span>
+                  <div>
+                    <strong>Student Feedback:</strong> ${'★'.repeat(complaint.feedback.rating)} (${complaint.feedback.rating}/5)<br>
+                    "${escapeHtml(complaint.feedback.comment)}"
+                  </div>
+                </div>
+              ` : ''}
+
+            </div>
+          </div>
+
+          <!-- Right: Timeline -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title">📅 Status & Work History</h5>
+              </div>
+              <div class="timeline">
+                ${complaint.updates.map((u, i) => `
+                  <div class="timeline-item ${i < complaint.updates.length - 1 ? 'completed' : 'active'}">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-title">${escapeHtml(u.status)} ${u.progress !== undefined ? `(${u.progress}%)` : ''}</div>
+                    <div class="timeline-meta">${escapeHtml(u.date)} · ${escapeHtml(u.by)}</div>
+                    <div class="timeline-body">${escapeHtml(u.note)}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function showList() {
+      document.getElementById('detail-view').classList.add('hidden');
+      document.getElementById('list-view').classList.remove('hidden');
+      loadAdminComplaints();
+    }
+
+    /** Open assign modal */
+    function openAssign(complaintId) {
+      selectedComplaintId = complaintId;
+      const c = Complaints.getById(complaintId);
+      document.getElementById('assign-complaint-id').textContent = complaintId;
+      document.getElementById('assign-employee').value = c?.assignedTo || '';
+      document.getElementById('assign-priority').value = c?.priority || 'Medium';
+      document.getElementById('assign-triggered').checked = Boolean(c?.isTriggered);
+      document.getElementById('assign-note').value = '';
+      openModal('assign-modal');
+    }
+
+    /** Confirm assignment */
+    function confirmAssign() {
+      const employee = document.getElementById('assign-employee').value;
+      let priority   = document.getElementById('assign-priority').value;
+      const isTriggered = document.getElementById('assign-triggered').checked;
+      if (isTriggered) priority = 'Urgent';
+      const note     = document.getElementById('assign-note').value.trim();
+
+      if (!employee) {
+        showToast('Please select an employee.', 'warning');
+        return;
+      }
+
+      Complaints.assign(selectedComplaintId, employee, priority, currentUser.name, isTriggered, note);
+      closeModal('assign-modal');
+      showToast(`Complaint assigned to ${employee} successfully! 👷`, 'success');
+
+      // Refresh view
+      loadAdminComplaints();
+      const updated = Complaints.getById(selectedComplaintId);
+      if (!document.getElementById('detail-view').classList.contains('hidden')) {
+        showDetail(updated);
+      }
+    }
+
+    /** Mark a complaint as In Progress */
+    function markInProgress(id) {
+      Complaints.updateProgress(id, 25, 'Work started by admin request.', currentUser.name);
+      showToast('Status updated to In Progress (25%).', 'success');
+      showDetail(Complaints.getById(id));
+    }
+
+    /** Filter table */
+    function filterComplaints() {
+      const search   = document.getElementById('search-input')?.value.toLowerCase() || '';
+      const status   = document.getElementById('filter-status').value;
+      const priority = document.getElementById('filter-priority').value;
+      const sortBy   = document.getElementById('sort-by').value;
+
+      let filtered = allComplaints.filter(c => {
+        const isCompleted = ['Resolved', 'Closed'].includes(c.status);
+        if (currentTab === 'active' && isCompleted) return false;
+        if (currentTab === 'triggered' && !(c.isTriggered || c.priority === 'Urgent')) return false;
+        if (currentTab === 'resolved' && !isCompleted) return false;
+
+        const matchSearch = !search ||
+          c.id.toLowerCase().includes(search) ||
+          c.studentName.toLowerCase().includes(search) ||
+          c.description.toLowerCase().includes(search) ||
+          c.category.toLowerCase().includes(search);
+
+        const matchStatus   = !status   || c.status   === status;
+        const matchPriority = !priority || c.priority === priority;
+        return matchSearch && matchStatus && matchPriority;
+      });
+
+      // Sort
+      if (sortBy === 'newest')   filtered.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+      if (sortBy === 'oldest')   filtered.sort((a, b) => new Date(a.submittedAt) - new Date(b.submittedAt));
+      if (sortBy === 'priority') {
+        const order = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
+        filtered.sort((a, b) => (order[a.priority] ?? 9) - (order[b.priority] ?? 9));
+      }
+
+      renderTable(filtered);
+    }
+  </script>
+</body>
+</html>
+

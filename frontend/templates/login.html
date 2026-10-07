@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Login and Registration — CampusFixit">
+  <title>Login & Sign Up — CampusFixit</title>
+  <link rel="stylesheet" href="../static/css/style.css">
+  <style>
+    .auth-mode-switch {
+      display: flex;
+      background: var(--color-surface-2, #f1f5f9);
+      border-radius: var(--radius-lg, 12px);
+      padding: 4px;
+      margin-bottom: var(--space-4, 16px);
+      gap: 4px;
+    }
+    .auth-mode-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: none;
+      font-size: var(--font-size-sm, 14px);
+      font-weight: 600;
+      color: var(--text-secondary, #64748b);
+      border-radius: var(--radius-md, 8px);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .auth-mode-btn.active {
+      background: var(--color-surface, #ffffff);
+      color: var(--color-primary, #2563eb);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .quick-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .quick-badge-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #334155;
+      transition: all 0.15s ease;
+    }
+    .quick-badge-btn:hover {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+
+<body class="auth-page">
+
+  <a href="../index.html" style="
+    position:fixed;top:var(--space-4);left:var(--space-6);
+    font-size:var(--font-size-sm);color:var(--text-secondary);
+    display:flex;align-items:center;gap:var(--space-2);z-index:100;
+  " id="back-home-link">← Back to Home</a>
+
+  <div class="auth-card" style="max-width: 440px;">
+
+    <div class="auth-logo">
+      <div class="logo-icon">🏫</div>
+      <h1>CampusFixit</h1>
+      <p>Campus Complaint & Facility Management</p>
+    </div>
+
+    <!-- Mode switch: Sign In vs Sign Up -->
+    <div class="auth-mode-switch">
+      <button class="auth-mode-btn active" id="btn-mode-signin" onclick="setAuthMode('signin')">🔑 Sign In</button>
+      <button class="auth-mode-btn" id="btn-mode-signup" onclick="setAuthMode('signup')">✨ Create Account</button>
+    </div>
+
+    <!-- ── SIGN IN SECTION ──────────────────────────── -->
+    <div id="section-signin">
+      <!-- Role tabs -->
+      <div class="role-tabs" role="tablist">
+        <button class="role-tab active" data-role="student" id="tab-student" onclick="switchRole('student')">🎓 Student</button>
+        <button class="role-tab" data-role="admin" id="tab-admin" onclick="switchRole('admin')">🛠️ Admin</button>
+        <button class="role-tab" data-role="employee" id="tab-employee" onclick="switchRole('employee')">👷 Staff</button>
+      </div>
+
+      <!-- Quick Fill Credentials Card -->
+      <div class="alert alert-info" style="margin-bottom:var(--space-4); padding: 10px 12px;">
+        <div style="font-size: 11.5px;">
+          <strong>⚡ Quick Demo Login (Click to fill):</strong>
+          <div id="quick-badges-container" class="quick-badges">
+            <!-- Filled dynamically by JS based on role -->
+          </div>
+        </div>
+      </div>
+
+      <form id="login-form" onsubmit="handleLogin(event)" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="login-email">Email Address <span class="required">*</span></label>
+          <input type="email" id="login-email" class="form-control" placeholder="you@campus.edu or gmail" autocomplete="email" required>
+          <span class="form-error" id="email-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password <span class="required">*</span></label>
+          <div style="position:relative;">
+            <input type="password" id="login-password" class="form-control" placeholder="Enter password" autocomplete="current-password" required>
+            <button type="button" onclick="togglePwd('login-password', 'toggle-password')" id="toggle-password"
+              style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:16px;">👁️</button>
+          </div>
+          <span class="form-error" id="password-error"></span>
+        </div>
+
+        <button type="submit" class="btn btn-gradient btn-full btn-lg" id="login-submit-btn">Login →</button>
+      </form>
+
+      <p style="text-align:center;margin-top:var(--space-4);font-size:var(--font-size-xs);color:var(--text-tertiary);">
+        New student or staff? <a href="javascript:void(0)" onclick="setAuthMode('signup')" style="color:var(--color-primary);font-weight:600;">Register here</a>
+      </p>
+    </div>
+
+    <!-- ── SIGN UP SECTION ──────────────────────────── -->
+    <div id="section-signup" style="display: none;">
+      <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; text-align: center;">
+        Register with your Student ID & Gmail or Campus Email.
+      </p>
+
+      <form id="signup-form" onsubmit="handleSignUp(event)" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="signup-name">Full Name <span class="required">*</span></label>
+          <input type="text" id="signup-name" class="form-control" placeholder="e.g. Magesh Kumar" required>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label" for="signup-rollno">Campus / Roll ID <span class="required">*</span></label>
+            <input type="text" id="signup-rollno" class="form-control" placeholder="e.g. CS2024099" required>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label" for="signup-role">Role <span class="required">*</span></label>
+            <select id="signup-role" class="form-control">
+              <option value="student" selected>🎓 Student</option>
+              <option value="employee">👷 Staff</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signup-email">Email Address <span class="required">*</span></label>
+          <input type="email" id="signup-email" class="form-control" placeholder="e.g. yourname@gmail.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signup-password">Create Password <span class="required">*</span></label>
+          <div style="position:relative;">
+            <input type="password" id="signup-password" class="form-control" placeholder="Min 6 characters" required>
+            <button type="button" onclick="togglePwd('signup-password', 'toggle-signup-pwd')" id="toggle-signup-pwd"
+              style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:16px;">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="signup-submit-btn">✨ Create Account & Proceed</button>
+      </form>
+
+      <p style="text-align:center;margin-top:var(--space-4);font-size:var(--font-size-xs);color:var(--text-tertiary);">
+        Already registered? <a href="javascript:void(0)" onclick="setAuthMode('signin')" style="color:var(--color-primary);font-weight:600;">Sign in here</a>
+      </p>
+    </div>
+
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../static/js/main.js"></script>
+  <script>
+    let activeRole = 'student';
+
+    const demoUsersByRole = {
+      student: [
+        { label: '🎓 Arjun Sharma', email: 'arjun@campus.edu', pass: 'student123' },
+        { label: '🎓 Priya Singh', email: 'priya@campus.edu', pass: 'student123' }
+      ],
+      employee: [
+        { label: '⚡ Ramesh (Electrical)', email: 'ramesh@campus.edu', pass: 'emp123' },
+        { label: '🔧 Suresh (Plumbing)', email: 'suresh@campus.edu', pass: 'emp123' },
+        { label: '💻 Vikram (IT Support)', email: 'vikram@campus.edu', pass: 'emp123' }
+      ],
+      admin: [
+        { label: '🛠️ Chief Admin', email: 'admin@campus.edu', pass: 'admin123' }
+      ]
+    };
+
+    function setAuthMode(mode) {
+      const isSignIn = mode === 'signin';
+      document.getElementById('section-signin').style.display = isSignIn ? 'block' : 'none';
+      document.getElementById('section-signup').style.display = isSignIn ? 'none' : 'block';
+      document.getElementById('btn-mode-signin').classList.toggle('active', isSignIn);
+      document.getElementById('btn-mode-signup').classList.toggle('active', !isSignIn);
+    }
+
+    function switchRole(role) {
+      activeRole = role;
+      document.querySelectorAll('.role-tab').forEach(t => t.classList.toggle('active', t.dataset.role === role));
+      renderQuickBadges(role);
+    }
+
+    function renderQuickBadges(role) {
+      const container = document.getElementById('quick-badges-container');
+      const users = demoUsersByRole[role] || [];
+      container.innerHTML = users.map(u => `
+        <button type="button" class="quick-badge-btn" onclick="fillCredentials('${u.email}', '${u.pass}', '${role}')">
+          ${u.label}
+        </button>
+      `).join('');
+    }
+
+    function fillCredentials(email, pass, role) {
+      if (role !== activeRole) {
+        switchRole(role);
+      }
+      document.getElementById('login-email').value = email;
+      document.getElementById('login-password').value = pass;
+      showToast(`Credentials filled for ${email} ✅`, 'info');
+    }
+
+    function togglePwd(fieldId, toggleBtnId) {
+      const f = document.getElementById(fieldId);
+      const b = document.getElementById(toggleBtnId);
+      f.type = f.type === 'password' ? 'text' : 'password';
+      b.textContent = f.type === 'password' ? '👁️' : '🙈';
+    }
+
+    function handleLogin(event) {
+      event.preventDefault();
+      clearFormErrors();
+
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const role = document.querySelector('.role-tab.active').dataset.role;
+
+      if (!email) {
+        showFieldError('login-email', 'Please enter your email address.');
+        return;
+      }
+
+      const allUsers = typeof UserManager !== 'undefined' ? UserManager.getAllUsers() : MOCK_DATA.users;
+      const user = allUsers.find(u =>
+        u.email.toLowerCase() === email.toLowerCase() &&
+        u.password === password &&
+        u.role === role
+      );
+
+      if (!user) {
+        document.getElementById('login-email').classList.add('is-invalid');
+        const err = document.getElementById('email-error');
+        err.textContent = 'Invalid email or password for selected role.';
+        err.style.display = 'block';
+        showToast('Login failed. Check credentials or role.', 'error');
+        return;
+      }
+
+      Session.login(user);
+      Complaints.init();
+
+      const btn = document.getElementById('login-submit-btn');
+      btn.textContent = 'Logging in...';
+      btn.disabled = true;
+
+      showToast(`Welcome, ${user.name}! 👋`, 'success');
+
+      setTimeout(() => {
+        const routes = {
+          student: 'student/dashboard.html',
+          admin: 'admin/dashboard.html',
+          employee: 'employee/dashboard.html',
+        };
+        window.location.href = routes[user.role];
+      }, 700);
+    }
+
+    function handleSignUp(event) {
+      event.preventDefault();
+      const name = document.getElementById('signup-name').value.trim();
+      const rollNo = document.getElementById('signup-rollno').value.trim();
+      const role = document.getElementById('signup-role').value;
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+
+      if (!name || !email || !password) {
+        showToast('Please fill all required fields.', 'warning');
+        return;
+      }
+
+      if (password.length < 4) {
+        showToast('Password should be at least 4 characters.', 'warning');
+        return;
+      }
+
+      const result = UserManager.registerUser({
+        name,
+        email,
+        password,
+        role,
+        rollNo,
+        department: role === 'student' ? 'General' : 'Maintenance'
+      });
+
+      if (!result.success) {
+        showToast(result.message, 'error');
+        return;
+      }
+
+      showToast(`Account created for ${name}! Please sign in. 🎉`, 'success');
+
+      setAuthMode('signin');
+      switchRole(role);
+      document.getElementById('login-email').value = email;
+      document.getElementById('login-password').value = password;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderQuickBadges('student');
+      const user = Session.getUser();
+      if (user) {
+        const routes = {
+          student: 'student/dashboard.html',
+          admin: 'admin/dashboard.html',
+          employee: 'employee/dashboard.html',
+        };
+        window.location.href = routes[user.role] || '../index.html';
+      }
+    });
+  </script>
+</body>
+
+</html>

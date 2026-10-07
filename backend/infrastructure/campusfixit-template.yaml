@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CampusFixit - Cloud-Based Student Management Infrastructure Stack'
+
+Resources:
+  CampusFixitArchiveBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub 'campusfixit-archive-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: CampusFixit
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  ArchiveBucketName:
+    Description: 'Name of the CampusFixit archive bucket created by CloudFormation'
+    Value: !Ref CampusFixitArchiveBucket

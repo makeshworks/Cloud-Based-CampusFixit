@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Admin Dashboard — CampusFixit">
+  <title>Admin Dashboard — CampusFixit</title>
+  <link rel="stylesheet" href="../../static/css/style.css">
+</head>
+<body>
+
+  <!-- ── NAVBAR ──────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div style="display: flex; align-items: center; gap: var(--space-4);">
+      <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()" id="sidebar-toggle">☰</button>
+      <a href="../index.html" class="navbar-brand">
+        <div class="brand-icon">🏫</div>
+        CampusFixit
+      </a>
+    </div>
+    <div class="navbar-nav">
+      <span class="badge badge-admin">🛠️ Admin</span>
+      <button class="btn btn-secondary btn-sm" onclick="Session.logout()" id="logout-btn">Logout</button>
+    </div>
+  </nav>
+
+  <div class="app-layout">
+
+    <!-- ── SIDEBAR ───────────────────────────────────────── -->
+    <aside class="sidebar" id="main-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Management</div>
+        <nav class="sidebar-nav">
+          <a href="dashboard.html" class="active" id="nav-dashboard">
+            <span class="nav-icon">📊</span> Dashboard
+          </a>
+          <a href="complaints.html" id="nav-complaints">
+            <span class="nav-icon">📋</span> All Complaints
+          </a>
+        </nav>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Loading...</div>
+          <div class="user-role" id="sidebar-user-role">admin</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── MAIN CONTENT ──────────────────────────────────── -->
+    <main class="main-content" id="main-content">
+
+      <div class="page-header">
+        <h1 class="page-title">📊 Admin Dashboard</h1>
+        <p class="page-subtitle">Overview of all campus complaints and maintenance activity.</p>
+      </div>
+
+      <!-- Stats grid -->
+      <div class="stats-grid" id="admin-stats">
+        <!-- Filled by JS -->
+      </div>
+
+      <!-- Urgent complaints alert -->
+      <div id="urgent-alert" class="hidden">
+        <div class="alert alert-danger" style="margin-bottom: var(--space-6);">
+          <span class="alert-icon">🚨</span>
+          <div>
+            <strong>Urgent complaints need immediate attention!</strong><br>
+            <span id="urgent-count-text"></span>
+          </div>
+          <a href="complaints.html?priority=Urgent" class="btn btn-danger btn-sm" style="margin-left: auto;" id="view-urgent-btn">View Urgent</a>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 340px; gap: var(--space-6); align-items: start;">
+
+        <!-- Left: Recent complaints table -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Recent Complaints</h3>
+              <p class="card-subtitle">Last 5 submitted — click to manage</p>
+            </div>
+            <a href="complaints.html" class="btn btn-secondary btn-sm" id="view-all-btn">View All →</a>
+          </div>
+          <div id="recent-table">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+
+        <!-- Right: Quick stats -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+
+          <!-- Status breakdown -->
+          <div class="card">
+            <h5 class="card-title" style="margin-bottom: var(--space-4);">📈 Status Breakdown</h5>
+            <div id="status-breakdown">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+
+          <!-- Unassigned complaints -->
+          <div class="card" id="unassigned-card" style="border-color: rgba(248,81,73,0.3);">
+            <h5 class="card-title" style="margin-bottom: var(--space-3); color: var(--color-danger);">⚠️ Needs Attention</h5>
+            <div id="unassigned-list">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <script src="../../static/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = Session.getUser();
+      if (!user || user.role !== 'admin') {
+        window.location.href = '../../login.html';
+        return;
+      }
+      initPage('admin');
+
+      const all = Complaints.getAll();
+      const stats = getStats();
+
+      // ── Render stat cards ─────────────────────────────────
+      const statCards = [
+        { icon: '📋', label: 'Total Complaints',    value: stats.total,      colorClass: 'blue'   },
+        { icon: '⏳', label: 'New / Unassigned',    value: stats.unassigned,  colorClass: 'red'    },
+        { icon: '🔨', label: 'In Progress',          value: stats.inProgress,  colorClass: 'yellow' },
+        { icon: '✅', label: 'Resolved',             value: stats.resolved,    colorClass: 'green'  },
+        { icon: '🚨', label: 'Urgent',               value: stats.urgent,      colorClass: 'red'    },
+        { icon: '📩', label: 'Submitted Today',      value: all.filter(c => c.submittedAt.startsWith(new Date().toISOString().split('T')[0])).length, colorClass: 'purple' },
+      ];
+
+      document.getElementById('admin-stats').innerHTML = statCards.map(s => `
+        <div class="stat-card">
+          <div class="stat-icon ${s.colorClass}">${s.icon}</div>
+          <div class="stat-content">
+            <div class="stat-number">${s.value}</div>
+            <div class="stat-label">${s.label}</div>
+          </div>
+        </div>
+      `).join('');
+
+      // ── Urgent alert ──────────────────────────────────────
+      if (stats.urgent > 0) {
+        document.getElementById('urgent-alert').classList.remove('hidden');
+        document.getElementById('urgent-count-text').textContent =
+          `${stats.urgent} urgent complaint(s) are waiting for attention.`;
+      }
+
+      // ── Recent complaints table ───────────────────────────
+      const recent = [...all]
+        .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
+        .slice(0, 5);
+
+      document.getElementById('recent-table').innerHTML = `
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID & Views</th>
+                <th>Category</th>
+                <th>Student</th>
+                <th>Assigned To</th>
+                <th>Priority</th>
+                <th>Progress</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${recent.map(c => {
+                const isCompleted = ['Resolved', 'Closed'].includes(c.status);
+                return `
+                  <tr class="${isCompleted ? 'card-completed' : ''}">
+                    <td>
+                      <div style="display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;">
+                        <span class="complaint-id">${escapeHtml(c.id)}</span>
+                        ${Complaints.renderViewDot(c)}
+                      </div>
+                    </td>
+                    <td>${escapeHtml(c.category)}</td>
+                    <td style="font-size: var(--font-size-xs);">${escapeHtml(c.studentName)}</td>
+                    <td style="font-size: var(--font-size-xs);">
+                      ${c.assignedTo ? `<span style="color: var(--color-purple); font-weight: 500;">👷 ${escapeHtml(c.assignedTo)}</span>` : '<span style="color: var(--text-tertiary);">Unassigned</span>'}
+                    </td>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        ${renderBadge(c.priority, getPriorityBadgeClass(c.priority))}
+                        ${c.isTriggered ? '<span class="badge badge-triggered" style="font-size:10px;">🚨 Triggered</span>' : ''}
+                      </div>
+                    </td>
+                    <td>
+                      ${renderProgressChip(c.progressPercent)}
+                    </td>
+                    <td>
+                      <a href="complaints.html?id=${encodeURIComponent(c.id)}"
+                         class="btn btn-secondary btn-sm">Manage</a>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-border); flex-wrap: wrap; font-size: var(--font-size-xs); color: var(--text-tertiary);">
+          <span><strong>Tracking Dot Legend:</strong></span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-admin"></span> Admin Viewed</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-employee"></span> Staff Viewed</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-both pulse"></span> Both Viewed</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><span class="view-dot view-dot-none"></span> Unread</span>
+        </div>
+      `;
+
+      // ── Status breakdown bars ─────────────────────────────
+      const statusGroups = [
+        { label: 'Submitted',    value: all.filter(c => c.status === 'Submitted').length,    color: 'var(--status-submitted)', pct: 0 },
+        { label: 'Under Review', value: all.filter(c => c.status === 'Under Review').length, color: 'var(--status-review)',    pct: 0 },
+        { label: 'Assigned',     value: all.filter(c => c.status === 'Assigned').length,     color: 'var(--status-assigned)',  pct: 0 },
+        { label: 'In Progress',  value: all.filter(c => c.status === 'In Progress').length,  color: 'var(--status-inprogress)',pct: 0 },
+        { label: 'Resolved',     value: all.filter(c => c.status === 'Resolved').length,     color: 'var(--status-resolved)',  pct: 0 },
+        { label: 'Closed',       value: all.filter(c => c.status === 'Closed').length,       color: 'var(--color-border)',     pct: 0 },
+      ];
+
+      const maxVal = Math.max(...statusGroups.map(s => s.value), 1);
+      statusGroups.forEach(s => s.pct = Math.round((s.value / maxVal) * 100));
+
+      document.getElementById('status-breakdown').innerHTML = statusGroups.map(s => `
+        <div style="margin-bottom: var(--space-3);">
+          <div style="display: flex; justify-content: space-between; font-size: var(--font-size-xs); margin-bottom: var(--space-1);">
+            <span style="color: var(--text-secondary);">${escapeHtml(s.label)}</span>
+            <span style="color: var(--text-primary); font-weight: 600;">${s.value}</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" style="width: ${s.pct}%; background: ${s.color};"></div>
+          </div>
+        </div>
+      `).join('');
+
+      // ── Unassigned complaints ─────────────────────────────
+      const unassigned = all.filter(c => !c.assignedTo && c.status === 'Submitted');
+      const unassignedContainer = document.getElementById('unassigned-list');
+
+      if (unassigned.length === 0) {
+        unassignedContainer.innerHTML = `<p style="font-size: var(--font-size-sm); color: var(--color-success);">✅ All complaints are assigned!</p>`;
+      } else {
+        unassignedContainer.innerHTML = unassigned.map(c => `
+          <div style="
+            padding: var(--space-3);
+            border-radius: var(--radius-md);
+            background: var(--color-surface-2);
+            margin-bottom: var(--space-2);
+            border-left: 3px solid var(--color-danger);
+          ">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span class="complaint-id" style="font-size: var(--font-size-xs);">${escapeHtml(c.id)}</span>
+              ${renderBadge(c.priority, getPriorityBadgeClass(c.priority))}
+            </div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: var(--space-1);">${escapeHtml(c.category)}</div>
+            <a href="complaints.html?id=${encodeURIComponent(c.id)}"
+               class="btn btn-danger btn-sm" style="margin-top: var(--space-2);">Assign Now</a>
+          </div>
+        `).join('');
+      }
+    });
+  </script>
+</body>
+</html>
